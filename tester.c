@@ -61,55 +61,39 @@ void tankDrive(){
 	}
 }
 
-void normalDrive(){
-	if(vexRT[Ch4] != 0){
-		if(nMotorEncoder[frontRightControl] > nMotorEncoder[frontLeftControl]){
-			motor[frontLeftControl] = vexRT[Ch4] - 20;
-			motor[frontRightControl] = vexRT[Ch4];
-		}
-		else if(nMotorEncoder[frontRightControl] < nMotorEncoder[frontLeftControl]){
-			motor[frontLeftControl] = vexRT[Ch4];
-			motor[frontRightControl] = vexRT[Ch4] - 20;
-		}
-		else{
-			motor[frontLeftControl] = vexRT[Ch4];
-			motor[frontRightControl] = vexRT[Ch4];
-			motor[backRightControl] = vexRT[Ch4];
-			motor[backLeftControl] = vexRT[Ch4];
-		}
-		if(nMotorEncoder[backRightControl] > nMotorEncoder[backLeftControl]){
-			motor[backRightControl] = vexRT[Ch4] - 20;
-			motor[backLeftControl] = vexRT[Ch4];
-		}
-		else if(nMotorEncoder[backRightControl] < nMotorEncoder[backLeftControl]){
-			motor[backRightControl] = vexRT[Ch4];
-			motor[backLeftControl] = vexRT[Ch4] - 20;
-		}
-		else{
-			motor[frontLeftControl] = vexRT[Ch4];
-			motor[frontRightControl] = vexRT[Ch4];
-			motor[backRightControl] = vexRT[Ch4];
-			motor[backLeftControl] = vexRT[Ch4];
-		}
-	}
-	else{
-		motor[frontLeftControl] = vexRT[Ch4];
-		motor[frontRightControl] = vexRT[Ch4];
-		motor[backRightControl] = vexRT[Ch4];
-		motor[backLeftControl] = vexRT[Ch4];
-	}
-	motor[backRightDrive] = vexRT[Ch2];
-	motor[backLeftDrive] = vexRT[Ch2];
-	motor[frontRightDrive] = vexRT[Ch2];
-	motor[frontLeftDrive] = vexRT[Ch2];
+void autoAdjust(short master, short slave){
+		setMotorTarget(motor[slave], nMotorEncoder[master], 50, true);
+		waitUntilMotorStop(motor[slave]);
 }
 
-//moveMotorTarget(nMotor, nEncoderCountTarget, nMaxSpeedToUse, bHoldAtEnd);
+void syncMotor(short master, short slave1, short slave2, short slave3){
+	//motor[master] = vexRT[Ch4];
+	int masterValue = nMotorEncoder[master];
+	int slaveSumValue = nMotorEncoder[slave1] + nMotorEncoder[slave2] + nMotorEncoder[slave3];
+	if(masterValue * 3 != slaveSumValue){ // if they are different values
+		autoAdjust(master, slave1);
+		autoAdjust(master, slave2);
+		autoAdjust(master, slave3);
+	}
+}
+
+void normalDrive(){
+	if(vexRT[Btn7U] == 0 && vexRT[Btn7D] == 0 && vexRT[Btn7L] == 0 && vexRT[Btn7R] ==0){
+		syncMotor(frontRightControl,frontLeftControl,backLeftControl,backRightControl);
+		motor[backRightDrive] = vexRT[Ch2];
+		motor[backLeftDrive] = vexRT[Ch2];
+		motor[frontRightDrive] = vexRT[Ch2];
+		motor[frontLeftDrive] = vexRT[Ch2];
+	}
+}
+
 task main(){
 	init();
-	while(true){
-		tankDrive();
-		initValues();
-		normalDrive();
-	}
+	setMotorTarget(motor[frontRightControl], 100, 70, true);
+	waitUntilMotorStop(motor[frontRightControl]);
+	//while(true){
+	//	tankDrive();
+	//	initValues();
+	//	normalDrive();
+	//}
 }
